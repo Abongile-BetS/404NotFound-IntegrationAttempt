@@ -52,10 +52,10 @@ Relationships    Features /
 
 The first stage loads the source CSV into the PostgreSQL `raw` schema.
 
-The current source is:
+The current demo source is:
 
 ```text
-/etl/data/seed/iovation_demo_synthetic_100000.csv
+/etl/data/seed/iovation_demo_synthetic_100.csv
 ```
 
 The ingestion process:
@@ -235,30 +235,24 @@ The goal is to keep the operational database normalized while providing the ML l
 
 ### Database
 
-The PostgreSQL database should be available to the ETL container using:
-
-```text
-Host: postgres
-Port: 5432 [Depends on which port you have available, I have changed the port to 5480]
-Database: aml
-User: aml
-Password: aml_password
-```
-
-These are the connection values currently configured in the ingestion script.
+The Compose ETL profile reads its database settings from the root
+`aml-risk-platform/.env` and connects to the `postgres` service over the
+Compose network. No separate ETL `.env` file is needed. On a new PostgreSQL
+volume, Compose deploys the schema automatically; existing volumes are not
+reset or migrated automatically.
 
 ### Backend API
 
-The backend reads its PostgreSQL connection string from `DATABASE_URL`. Set it
-before starting the API, using the host port and credentials configured for
-PostgreSQL in `docker-compose.yml`. For example, in PowerShell:
+When running the backend outside Docker, set `DATABASE_URL` using the
+credentials from `.env` and the published PostgreSQL port. Inside Docker, the
+Compose service supplies the container-network URL automatically.
 
 ```powershell
-$env:DATABASE_URL = "postgresql+psycopg2://USER:PASSWORD@localhost:5480/aml"
+$env:DATABASE_URL = "postgresql+psycopg2://<user>:<url-safe-password>@localhost:5480/<database>"
 ```
 
-The database schema must be deployed from `data/db/db_setup` before the API
-endpoints are used.
+The example below shows the URL shape; replace its placeholders with your
+database name and URL-safe credentials.
 
 ### Source CSV
 
@@ -268,16 +262,16 @@ Place the source CSV in:
 /etl/data/seed/
 ```
 
-The filename is configured using:
+The default filename is:
 
 ```python
-SEED_FILE = "iovation_demo_synthetic_100000"
+SEED_FILE = "iovation_demo_synthetic_100"
 ```
 
-The pipeline then reads:
+The ETL profile mounts `data/db/seed` at `/etl/data/seed` and reads:
 
 ```text
-/etl/data/seed/iovation_demo_synthetic_100000.csv
+/etl/data/seed/iovation_demo_synthetic_100.csv
 ```
 
 ### Run Order
@@ -285,20 +279,14 @@ The pipeline then reads:
 The ETL components should be executed in this order:
 
 ```text
-1. Start PostgreSQL container (docker compose up- d)
-       ↓
-2. Create database schemas/tables(After connecting to it using a dbms run this in your terminal:docker exec -i aml-postgres psql -U aml -d aml < deploy.sql)
-       ↓
-3. Run CSV → raw.iovation ingestion (docker build etl-engine ; docker compose etl-engine)
-       ↓
-4. Run raw → normalized ETL
-       ↓
-5. Populate Network Intelligence
-       ↓
-6. Build ML denormalized datasets
-       ↓
-7. Run risk scoring / analytics
+1. From `aml-risk-platform`, configure `.env` and start PostgreSQL with `docker compose up -d postgres`.
+2. Wait for the database health check; the schema is deployed automatically on first startup with a new volume.
+3. Run ingestion and normalized loading with `docker compose --profile etl run --rm etl-engine`.
 ```
+
+The current Compose ETL job runs raw iovation ingestion and normalized loading
+only. Subsequent network, denormalized dataset and analytics steps are not
+wired into this container.
 
 ---
 
@@ -315,7 +303,7 @@ EXPORT_REJECTION_TO_CSV = False
 Rejected rows can optionally be exported to:
 
 ```text
-/etl/data/rejected_iovation_demo_synthetic_100000.csv
+/etl/data/rejected_iovation_demo_synthetic_100.csv
 ```
 
 ---

@@ -1,3 +1,4 @@
+import os
 import uuid
 import psycopg
 from psycopg import sql
@@ -6,11 +7,11 @@ import random
 from faker import Faker
 
 
-PG_HOST = "localhost"
-PG_PORT = 5480
-PG_DATABASE = "aml"
-PG_USER = "aml"
-PG_PASSWORD = "aml_password"
+PG_HOST = os.getenv("PGHOST", "localhost")
+PG_PORT = int(os.getenv("PGPORT", "5480"))
+PG_DATABASE = os.getenv("PGDATABASE", "aml")
+PG_USER = os.getenv("PGUSER", "aml")
+PG_PASSWORD = os.getenv("PGPASSWORD")
 
 DEBUG_MODE = 0
 
@@ -34,7 +35,7 @@ def get_pg_connection():
 
     except Exception as e:
         print(f"PostgreSQL connection failed: {e}")
-        return None
+        raise
 
 
 def execute_query(conn, query, params=None, fetch=False):
@@ -1292,9 +1293,6 @@ def main():
 
     conn = get_pg_connection()
 
-    if conn is None:
-        return
-
     try:
         
         # CUSTOMER
@@ -1341,4 +1339,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

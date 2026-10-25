@@ -12,7 +12,3 @@ RUN pip install \
 COPY src ./src
 
 CMD ["sh", "-c", "python src/ingestion.py && python src/normalized_load.py"]
-
-CMD ["sh", "-c", "python src/denormalized_load.py"]
-
-CMD ["sh", "-c", "echo 'hello'"]

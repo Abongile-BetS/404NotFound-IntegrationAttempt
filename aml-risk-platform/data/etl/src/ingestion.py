@@ -1,14 +1,20 @@
 import psycopg
 import csv
+import os
 from datetime import datetime
 from pathlib import Path
 
 SEED_FILE = "iovation_demo_synthetic_100"
-SEED_FILEPATH = (
-    Path(__file__).resolve().parents[2]
-    / "db"
-    / "seed"
-    / f"{SEED_FILE}.csv"
+SEED_FILEPATH = Path(
+    os.getenv(
+        "SEED_FILEPATH",
+        str(
+            Path(__file__).resolve().parents[2]
+            / "db"
+            / "seed"
+            / f"{SEED_FILE}.csv"
+        ),
+    )
 )
 
 PRINT_REJECTION_REASONS = True
@@ -224,21 +230,15 @@ def xprint(msg:str):
         
 
 def get_pg_connection():
-    try:
-        conn = psycopg.connect(
-            host="localhost",
-            port=5480,
-            dbname="aml",
-            user="aml",
-            password="aml_password",
-        )
-
-        xprint("Connected to PostgreSQL successfully!")
-        return conn
-
-    except Exception as e:
-        print(f"PostgreSQL connection failed: {e}")
-        return None
+    conn = psycopg.connect(
+        host=os.getenv("PGHOST", "localhost"),
+        port=os.getenv("PGPORT", "5480"),
+        dbname=os.getenv("PGDATABASE", "aml"),
+        user=os.getenv("PGUSER", "aml"),
+        password=os.getenv("PGPASSWORD"),
+    )
+    xprint("Connected to PostgreSQL successfully!")
+    return conn
 
 
 def get_iovation_schema(conn):
@@ -448,10 +448,6 @@ def main():
     print("ETL ingestion pipeline starting...")
 
     conn = get_pg_connection()
-
-    if not conn:
-        print("Could not establish postgres connection")
-        return
 
     xprint("Retrieving raw.iovation schema...")
     iov_schema = get_iovation_schema(conn)
