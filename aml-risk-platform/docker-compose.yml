@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: aml
+      POSTGRES_USER: aml
+      POSTGRES_PASSWORD: aml_password
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5480}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data/db/db_setup:/tmp/db_setup:ro
+      - ./data/db/db_setup/deploy.sql:/docker-entrypoint-initdb.d/000-deploy.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  keycloak-db:
+    image: postgres:17
+    container_name: aml-keycloak-db
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak_password
+    volumes:
+      - keycloak_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.4
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Set KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DB:-keycloak}
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak_password
+    ports:
+      - "127.0.0.1:${KEYCLOAK_PORT:-8080}:8080"
+    volumes:
+      - ./infrastructure/keycloak:/opt/keycloak/data/import:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_API_KEY: ${AI_API_KEY:-local}
+      AI_MODEL_NAME: ${AI_MODEL_NAME:-}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER:-http://localhost:8080/realms/aml-risk}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL:-http://keycloak:8080/realms/aml-risk/protocol/openid-connect/certs}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE:-aml-api}
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     args:
+  #       VITE_API_URL: http://localhost:${BACKEND_PORT:-8000}
+  #       VITE_KEYCLOAK_URL: ${KEYCLOAK_URL:-http://localhost:8080}
+  #       VITE_KEYCLOAK_REALM: ${KEYCLOAK_REALM:-aml-risk}
+  #       VITE_KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-aml-frontend}
+  #   ports:
+  #     - "127.0.0.1:${FRONTEND_PORT:-5173}:80"
+  #   depends_on:
+  #     - backend
+
+  # etl-engine:
+    build: ./data/etl
+    profiles: ["etl"]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data/db/seed:/etl/data/seed:ro
+
+volumes:
+  postgres_data:
+  keycloak_postgres_data:

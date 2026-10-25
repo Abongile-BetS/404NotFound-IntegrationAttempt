@@ -1,0 +1,25 @@
+# Python
+.venv/
+venv/
+env/
+
+__pycache__/
+*.pyc
+*.pyo
+
+# VS Code
+.vscode/
+
+# JetBrains
+.idea/
+
+# Environment variables
+.env
+
+# Test artifacts
+.pytest_cache/
+.coverage
+
+# OS files
+Thumbs.db
+.DS_Store

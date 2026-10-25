@@ -1,0 +1,27 @@
+CREATE TABLE IF NOT EXISTS risk.rules (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    rule_guid UUID NOT NULL UNIQUE,
+
+    code VARCHAR(100) NOT NULL UNIQUE,
+
+    name VARCHAR(255) NOT NULL,
+
+    category VARCHAR(100) NOT NULL,
+
+    description TEXT,
+
+    rule_type VARCHAR(100) NOT NULL,
+
+    severity VARCHAR(50) NOT NULL,
+
+    risk_weight NUMERIC(10,2) NOT NULL,
+
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+
+    version VARCHAR(50) NOT NULL,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

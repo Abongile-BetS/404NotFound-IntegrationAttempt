@@ -1,0 +1,6 @@
+pandas
+psycopg[binary]
+pydantic
+pytest
+Faker==37.8.0
+neo4j
