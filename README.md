@@ -95,74 +95,30 @@ The platform follows:
 
 The MVP is intentionally designed as a modular monolith to support rapid delivery, maintainability, and future scalability.
 
-5. Backend Setup
-Navigate to the backend directory:
+## Run locally with Docker
 
-cd backend
+The runnable application and its Compose file are in `aml-risk-platform`. From PowerShell:
 
-Create a Python virtual environment: python -m venv .venv
+```powershell
+Set-Location .\aml-risk-platform
+Copy-Item .env.example .env
+```
 
-Activate the virtual environment.
-Windows
-.venv\Scripts\activate
+Edit `.env` and replace all three password placeholders. Use URL-safe characters for `POSTGRES_PASSWORD`. With Docker Desktop running, validate and start the stack:
 
-Install the backend dependencies: pip install -r requirements.txt
+```powershell
+docker compose config --quiet
+docker compose up --build -d
+```
 
-Start the FastAPI development server: uvicorn app.main:app --reload
+This starts PostgreSQL, Keycloak, the FastAPI backend and the frontend. Open:
 
-The backend should now be available at: http://localhost:8000
-FastAPI API documentation is available at: http://localhost:8000/docs
+- Frontend: `http://localhost:5173`
+- Backend API docs: `http://localhost:8000/docs`
+- Keycloak: `http://localhost:8080`
 
-6. Frontend Setup
-Open a new terminal and navigate to the frontend directory:
+The database schema is deployed automatically only when PostgreSQL creates a new data volume. To stop the stack without deleting data, run `docker compose down`. The optional demo ETL job can be run after startup with `docker compose --profile etl run --rm etl-engine`.
 
-cd frontend
-
-Install the frontend dependencies:
-npm install (Make sure you have Node.js installed before, verify using [node --version] command)
-
-Start the development server:
-
-npm run dev
-
-The frontend will be available at the URL displayed by the development server.
-
-7. Running the Complete Application
-For local development, the recommended startup sequence is:
-
-Terminal 1 — Infrastructure
-From the project root:
-
-docker compose up -d
-
-Terminal 2 — Backend
-cd backend
-
-python -m venv .venv
-
-source .venv/bin/activate
-
-pip install -r requirements.txt
-
-uvicorn app.main:app --reload
-
-Terminal 3 — Frontend
-cd frontend
-
-npm install
-
-npm run dev
-
-The application should now be running with:
-
-Frontend
-   │
-   ├── Authentication ──► Keycloak
-   │
-   └── API Requests ────► FastAPI Backend
-                              │
-                              ├── Application Database
-                              │
-                              └── Neo4j
+See [aml-risk-platform/INTEGRATION_README.md](./aml-risk-platform/INTEGRATION_README.md) for integration details and [aml-risk-platform/docs/CONSOLIDATION_AND_DOCKER.md](./aml-risk-platform/docs/CONSOLIDATION_AND_DOCKER.md) for deployment limitations. Docker is not installed in every development environment, so the Compose stack must be built and run on a machine with Docker Desktop.
 
 # 404NotFound-IntegrationAttempt

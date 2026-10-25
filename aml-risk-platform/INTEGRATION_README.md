@@ -9,7 +9,11 @@ AML Monitoring, KYC/CDD, Adverse Media, PEP & Sanctions, Network Intelligence, R
 Relevant AML-KYC-Enterprise-Risk-Upgrade services, tests and documentation are preserved in `integrations/aml_kyc_risk_upgrade_reference/`. They are **reference-only** because their SQLAlchemy data models differ from 404NotFound's SQL schema. The added evaluator uses an explicit adapter for the existing tables rather than replacing the host's customer or risk modules.
 
 ## Start
-Copy `.env.example` to `.env`, replace every password, then run `docker compose config` and `docker compose up --build -d postgres keycloak-db keycloak backend frontend`. On a new PostgreSQL volume, the included schema deployment script runs automatically. The local `aml-risk` Keycloak realm is imported from `infrastructure/keycloak/aml-risk-realm.json`. Old `/intelligence/*` paths redirect to their merged host pages. API details are in `docs/API_REFERENCE.md`.
+From this directory, copy `.env.example` to `.env` and replace all three password values. Use URL-safe characters for `POSTGRES_PASSWORD` because it is included in the backend database URL. Then run `docker compose config --quiet` followed by `docker compose up --build -d`. This starts PostgreSQL, Keycloak, the FastAPI backend and the frontend. On a new PostgreSQL volume, the included schema deployment script runs automatically. The local `aml-risk` Keycloak realm is imported from `infrastructure/keycloak/aml-risk-realm.json`. Open the frontend at `http://localhost:5173`, the backend docs at `http://localhost:8000/docs`, and Keycloak at `http://localhost:8080`. Old `/intelligence/*` paths redirect to their merged host pages. API details are in `docs/API_REFERENCE.md`.
+
+The root `.env` is the only environment file used by Docker Compose. Frontend `VITE_*` settings are supplied as build arguments from that file's `KEYCLOAK_*` and port values; rebuild the frontend after changing them. The frontend `.env.example` is only for running Vite outside Docker.
+
+The ETL is an optional one-shot profile, not part of normal startup. After the database is ready, run `docker compose --profile etl run --rm etl-engine` to ingest the included iovation demo CSV and load normalized records. It uses the same PostgreSQL credentials as the rest of the stack.
 
 ## Limitations
 - No live external sanctions/PEP/adverse media connector, identity verification, OCR or Iovation integration is added.
