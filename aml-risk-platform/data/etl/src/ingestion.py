@@ -1,19 +1,25 @@
-import psycopg
 import csv
 import os
 from datetime import datetime
 from pathlib import Path
 
+import psycopg
+from dotenv import load_dotenv
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+load_dotenv(PROJECT_ROOT / ".env")
+
 SEED_FILE = "iovation_demo_synthetic_100"
 SEED_FILEPATH = Path(
     os.getenv(
         "SEED_FILEPATH",
-        str(
-            Path(__file__).resolve().parents[2]
-            / "db"
-            / "seed"
-            / f"{SEED_FILE}.csv"
-        ),
+        str(Path(__file__).resolve().parents[2] / "db" / "seed" / f"{SEED_FILE}.csv"),
+    )
+)
+REJECT_FILEPATH = Path(
+    os.getenv(
+        "REJECT_FILEPATH",
+        str(SEED_FILEPATH.with_name(f"rejected_{SEED_FILE}.csv")),
     )
 )
 
@@ -32,7 +38,6 @@ COLUMN_MAPPING = {
     "Remote Tool Detected": "remote_tool_detected",
     "Rule": "rule_name",
     "Score": "score",
-
     # Risk Scores
     "Stated IP Botnet Score": "stated_ip_botnet_score",
     "iovation IP Botnet Score": "iovation_ip_botnet_score",
@@ -40,12 +45,10 @@ COLUMN_MAPPING = {
     "Behavioral Analytics Score": "behavioral_analytics_score",
     "SureScore (Global)": "surescore_global",
     "SureScore (Vertical)": "surescore_vertical",
-
     # Tenant / Account
     "Tenant ID": "tenant_id",
     "Account": "account_code",
     "Device ID": "device_id",
-
     # Real IP
     "Real IP Address": "real_ip_address",
     "Real IP Proxy Type": "real_ip_proxy_type",
@@ -55,7 +58,6 @@ COLUMN_MAPPING = {
     "Real IP City": "real_ip_city",
     "Real IP Region": "real_ip_region",
     "Real IP Country": "real_ip_country",
-
     # Stated IP
     "Stated IP Address": "stated_ip_address",
     "Stated IP ProxyType": "stated_ip_proxy_type",
@@ -65,7 +67,6 @@ COLUMN_MAPPING = {
     "Stated City": "stated_city",
     "Stated Region": "stated_region",
     "Stated Country": "stated_country",
-
     # iovation IP
     "iovation IP Address": "iovation_ip_address",
     "iovation IP Proxy Type": "iovation_ip_proxy_type",
@@ -75,7 +76,6 @@ COLUMN_MAPPING = {
     "iovation City": "iovation_city",
     "iovation Region": "iovation_region",
     "iovation Country": "iovation_country",
-
     # Device
     "Blackbox Age": "blackbox_age",
     "Blackbox Date": "blackbox_date",
@@ -92,23 +92,19 @@ COLUMN_MAPPING = {
     "Flash Enabled": "flash_enabled",
     "Flash Storage Enabled": "flash_storage_enabled",
     "Flash Version": "flash_version",
-
     # IDs
     "Event ID": "event_id",
     "Service ID": "service_id",
     "Online ID": "online_id",
-
     # Email
     "Email Address": "email_address",
     "Email Verified": "email_verified",
-
     # Billing
     "Billing Street": "billing_street",
     "Billing City": "billing_city",
     "Billing Region": "billing_region",
     "Billing Country": "billing_country",
     "Billing Postal Code": "billing_postal_code",
-
     # Shipping
     "Shipping Street": "shipping_street",
     "Shipping City": "shipping_city",
@@ -116,18 +112,15 @@ COLUMN_MAPPING = {
     "Shipping Country": "shipping_country",
     "Shipping Postal Code": "shipping_postal_code",
     "Billing/Shipping Mismatch": "billing_shipping_mismatch",
-
     # Transaction
     "Monetary Amount": "monetary_amount",
     "Currency Type": "currency_type",
     "Credit Card BIN": "credit_card_bin",
     "ACH Routing Number": "ach_routing_number",
-
     # Contact
     "Home Phone Number": "home_phone_number",
     "Mobile Phone Number": "mobile_phone_number",
     "Office Phone Number": "office_phone_number",
-
     # Misc
     "Referrer URL": "referrer_url",
     "Alternate IP": "alternate_ip",
@@ -143,7 +136,6 @@ COLUMN_MAPPING = {
     "Mobile Phone SMS Enabled": "mobile_phone_sms_enabled",
     "Office Phone Verified": "office_phone_verified",
     "Office Phone SMS Enabled": "office_phone_sms_enabled",
-
     # Geolocation
     "GPS Spoofing Detected": "gps_spoofing_detected",
     "GPS Spoofing Type": "gps_spoofing_type",
@@ -151,13 +143,11 @@ COLUMN_MAPPING = {
     "Altitude": "altitude",
     "Geolocation Timestamp": "geolocation_timestamp",
     "Geolocation Accuracy": "geolocation_accuracy",
-
     # SIM / Network
     "Sim Service": "sim_service",
     "Sim Service Country": "sim_service_country",
     "Carrier Name": "carrier_name",
     "Carrier Country": "carrier_country",
-
     # Device Hardware
     "Device Hardware ID": "device_hardware_id",
     "Device Manufacturer": "device_manufacturer",
@@ -172,7 +162,6 @@ COLUMN_MAPPING = {
     "Hostname": "hostname",
     "Android SDK Level": "android_sdk_level",
     "Allow Non Market Apps": "allow_non_market_apps",
-
     # Device Security
     "Jailbreak / Root Detected": "jailbreak_root_detected",
     "Root Evasion Indicated": "root_evasion_indicated",
@@ -184,15 +173,12 @@ COLUMN_MAPPING = {
     "Application Signer Id": "application_signer_id",
     "Application Bundle Id": "application_bundle_id",
     "Application Process Name": "application_process_name",
-
     # Display / Environment
     "Screen Color Depth": "screen_color_depth",
     "Virtual Environment Detected": "virtual_environment_detected",
     "Private Browsing Indicator": "private_browsing_indicator",
-
     # Transaction / Model Rules
     "TransactionField.rules": "transaction_field_rules",
-
     # SureScore / Models
     "SureScore (Primary)": "surescore_primary",
     "SureScore (Preview)": "surescore_preview",
@@ -201,48 +187,44 @@ COLUMN_MAPPING = {
     "Behavioral Model (Primary)": "behavioral_model_primary",
     "Behavioral Model (Preview)": "behavioral_model_preview",
     "Behavioral Analytics Score Raw": "behavioral_analytics_score_raw",
-
     # Fraud / IP Signals
     "Fraud Ring Indicator": "fraud_ring_indicator",
     "IP Signal Score (iovation IP)": "ip_signal_score_iovation_ip",
     "IP Signal Score (Stated IP)": "ip_signal_score_stated_ip",
     "IP Signal Score (Real IP)": "ip_signal_score_real_ip",
-
     "Last IP Signal Score (iovation IP)": "last_ip_signal_score_iovation_ip",
     "Last IP Signal Score (Stated IP)": "last_ip_signal_score_stated_ip",
     "Last IP Signal Score (Real IP)": "last_ip_signal_score_real_ip",
-
     "IP Signal Result Codes (iovation IP)": "ip_signal_result_codes_iovation_ip",
     "IP Signal Result Codes (Stated IP)": "ip_signal_result_codes_stated_ip",
     "IP Signal Result Codes (Real IP)": "ip_signal_result_codes_real_ip",
-
     "IP Signal Score Change Date (iovation IP)": "ip_signal_score_change_date_iovation_ip",
     "IP Signal Score Change Date (Stated IP)": "ip_signal_score_change_date_stated_ip",
     "IP Signal Score Change Date (Real IP)": "ip_signal_score_change_date_real_ip",
-
     # Transaction Billing
     "TransactionField.tuBillingId": "transaction_field_tu_billing_id",
 }
 
-def xprint(msg:str):
+
+def xprint(msg: str):
     if DEBUG_MODE == 1:
         print(msg)
-        
+
 
 def get_pg_connection():
     conn = psycopg.connect(
-        host=os.getenv("PGHOST", "localhost"),
-        port=os.getenv("PGPORT", "5480"),
-        dbname=os.getenv("PGDATABASE", "aml"),
-        user=os.getenv("PGUSER", "aml"),
-        password=os.getenv("PGPASSWORD"),
+        host=os.getenv("PGHOST", os.getenv("POSTGRES_HOST", "localhost")),
+        port=os.getenv("PGPORT", os.getenv("POSTGRES_PORT", "5432")),
+        dbname=os.getenv("PGDATABASE", os.getenv("POSTGRES_DB", "aml")),
+        user=os.getenv("PGUSER", os.getenv("POSTGRES_USER", "aml")),
+        password=os.getenv("PGPASSWORD", os.getenv("POSTGRES_PASSWORD")),
     )
     xprint("Connected to PostgreSQL successfully!")
     return conn
 
 
 def get_iovation_schema(conn):
-        query = """
+    query = """
             SELECT
                 column_name,
                 data_type
@@ -251,11 +233,12 @@ def get_iovation_schema(conn):
             AND table_name = 'iovation'
             ORDER BY ordinal_position;
         """
-        with conn.cursor() as cursor:
-            cursor.execute(query)
-            rows = cursor.fetchall()
+    with conn.cursor() as cursor:
+        cursor.execute(query)
+        rows = cursor.fetchall()
 
-        return {column_name: data_type for column_name, data_type in rows}
+    return {column_name: data_type for column_name, data_type in rows}
+
 
 def clean_value(value):
 
@@ -272,12 +255,12 @@ def clean_value(value):
 
     return value
 
+
 def read_batches(reader, batch_size=10_000):
 
     batch = []
 
     for row in reader:
-
         batch.append(row)
 
         if len(batch) == batch_size:
@@ -286,6 +269,7 @@ def read_batches(reader, batch_size=10_000):
 
     if batch:
         yield batch
+
 
 def validate_value(value, expected_type):
 
@@ -319,7 +303,6 @@ def validate_value(value, expected_type):
             return False
 
     if expected_type == "timestamp with time zone":
-
         value = value.strip()
 
         if value.endswith(" SAST"):
@@ -344,6 +327,7 @@ def validate_value(value, expected_type):
 
     return True
 
+
 def validate_row(row, iov_schema):
 
     errors = []
@@ -351,24 +335,25 @@ def validate_row(row, iov_schema):
     cleaned_row = {}
 
     for csv_column in row:
-
         if csv_column not in COLUMN_MAPPING:
-
-            errors.append({
-                "column": csv_column,
-                "reason": "Column is not defined in COLUMN_MAPPING"
-            })
+            errors.append(
+                {
+                    "column": csv_column,
+                    "reason": "Column is not defined in COLUMN_MAPPING",
+                }
+            )
 
             continue
 
         target_column = COLUMN_MAPPING[csv_column]
 
         if target_column not in iov_schema:
-
-            errors.append({
-                "column": csv_column,
-                "reason": f"Target column '{target_column}' does not exist in raw.iovation"
-            })
+            errors.append(
+                {
+                    "column": csv_column,
+                    "reason": f"Target column '{target_column}' does not exist in raw.iovation",
+                }
+            )
 
             continue
 
@@ -377,17 +362,19 @@ def validate_row(row, iov_schema):
         expected_type = iov_schema[target_column]
 
         if not validate_value(value, expected_type):
-
-            errors.append({
-                "column": csv_column,
-                "value": value,
-                "expected_type": expected_type,
-                "reason": "Value does not match expected datatype"
-            })
+            errors.append(
+                {
+                    "column": csv_column,
+                    "value": value,
+                    "expected_type": expected_type,
+                    "reason": "Value does not match expected datatype",
+                }
+            )
 
         cleaned_row[target_column] = value
 
     return cleaned_row, errors
+
 
 def insert_batch(conn, valid_rows):
 
@@ -403,10 +390,7 @@ def insert_batch(conn, valid_rows):
 
     """
 
-    values = [
-        tuple(row[column] for column in columns)
-        for row in valid_rows
-    ]
+    values = [tuple(row[column] for column in columns) for row in valid_rows]
 
     with conn.cursor() as cursor:
         cursor.executemany(query, values)
@@ -423,32 +407,17 @@ def save_rejections(rejected_rows, filepath, write_header=False):
 
     mode = "w" if write_header else "a"
 
-    with open(
-        filepath,
-        mode,
-        encoding="utf-8",
-        newline=""
-    ) as file:
-
-        writer = csv.DictWriter(
-            file,
-            fieldnames=fieldnames
-        )
+    with open(filepath, mode, encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
 
         if write_header:
             writer.writeheader()
-
 
         for rejection in rejected_rows:
             writer.writerow(rejection["row"])
 
 
-def main():
-
-    print("ETL ingestion pipeline starting...")
-
-    conn = get_pg_connection()
-
+def _run_ingestion(conn):
     xprint("Retrieving raw.iovation schema...")
     iov_schema = get_iovation_schema(conn)
 
@@ -457,42 +426,28 @@ def main():
     total_rows = 0
     total_valid = 0
     total_rejected = 0
+    rejected_rows = []
 
-    with open(
-        SEED_FILEPATH,
-        "r",
-        encoding="utf-8-sig",
-        newline=""
-    ) as file:
-
+    with open(SEED_FILEPATH, encoding="utf-8-sig", newline="") as file:
         reader = csv.DictReader(file)
 
         row_number = 0
 
         for batch in read_batches(reader, 10_000):
-
             valid_rows = []
             rejected_rows = []
 
             for row in batch:
-
                 row_number += 1
 
-                cleaned_row, errors = validate_row(
-                    row,
-                    iov_schema
-                )
+                cleaned_row, errors = validate_row(row, iov_schema)
 
                 if errors:
-
-                    rejected_rows.append({
-                        "row_number": row_number,
-                        "row": row,
-                        "errors": errors
-                    })
+                    rejected_rows.append(
+                        {"row_number": row_number, "row": row, "errors": errors}
+                    )
 
                 else:
-
                     valid_rows.append(cleaned_row)
 
             total_rows += len(batch)
@@ -503,9 +458,9 @@ def main():
 
             if EXPORT_REJECTION_TO_CSV:
                 save_rejections(
-                    rejected_rows, 
-                    REJECT_FILEPATH, 
-                    write_header=(total_rows == len(batch))
+                    rejected_rows,
+                    REJECT_FILEPATH,
+                    write_header=(total_rows == len(batch)),
                 )
 
             print(
@@ -522,17 +477,25 @@ def main():
 
     if PRINT_REJECTION_REASONS:
         for rejected_row in rejected_rows:
-
             print(f"\nREJECTED ROW {rejected_row['row_number']}")
 
             for error in rejected_row["errors"]:
-
                 print(
                     f"  Column: {error.get('column')}"
                     f"\n  Value: {error.get('value')!r}"
                     f"\n  Expected: {error.get('expected_type')}"
                     f"\n  Reason: {error.get('reason')}"
                 )
+
+
+def main():
+    print("ETL ingestion pipeline starting...")
+    connection = get_pg_connection()
+    try:
+        _run_ingestion(connection)
+    finally:
+        connection.close()
+
 
 if EXPORT_REJECTION_TO_CSV:
     print(f"===============Exported rejected rows in {REJECT_FILEPATH}")

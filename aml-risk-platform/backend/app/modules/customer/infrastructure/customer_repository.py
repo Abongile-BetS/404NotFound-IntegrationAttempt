@@ -2,7 +2,7 @@ from app.shared.database.connection import fetch_all, fetch_one
 
 
 class CustomerRepository:
-    async def list_all(self):
+    async def list_all(self, limit: int = 100, offset: int = 0):
         return await fetch_all(
             """
             SELECT
@@ -16,7 +16,9 @@ class CustomerRepository:
                 created_at::text AS created_at
             FROM public.customer
             ORDER BY created_at DESC, id DESC
-            """
+            LIMIT :limit OFFSET :offset
+            """,
+            {"limit": limit, "offset": offset},
         )
 
     async def get_by_id(self, customer_id: str):

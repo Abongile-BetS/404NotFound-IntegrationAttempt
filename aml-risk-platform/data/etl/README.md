@@ -55,7 +55,7 @@ The first stage loads the source CSV into the PostgreSQL `raw` schema.
 The current demo source is:
 
 ```text
-/etl/data/seed/iovation_demo_synthetic_100.csv
+data/db/seed/iovation_demo_synthetic_100.csv
 ```
 
 The ingestion process:
@@ -226,40 +226,29 @@ The goal is to keep the operational database normalized while providing the ML l
 
 ### Requirements
 
-* Docker
-* Docker Compose
 * PostgreSQL
-* Python 3.x
+* Python 3.12 or newer
 * `psycopg`
 * CSV ingestion data file
 
 ### Database
 
-The Compose ETL profile reads its database settings from the root
-`aml-risk-platform/.env` and connects to the `postgres` service over the
-Compose network. No separate ETL `.env` file is needed. On a new PostgreSQL
-volume, Compose deploys the schema automatically; existing volumes are not
-reset or migrated automatically.
+The scripts read database settings from the root `.env` file. Create a local
+PostgreSQL database and deploy the schema as described in
+[`../../docs/LOCAL_SETUP.md`](../../docs/LOCAL_SETUP.md). No separate ETL
+`.env` file is needed.
 
 ### Backend API
 
-When running the backend outside Docker, set `DATABASE_URL` using the
-credentials from `.env` and the published PostgreSQL port. Inside Docker, the
-Compose service supplies the container-network URL automatically.
-
-```powershell
-$env:DATABASE_URL = "postgresql+psycopg2://<user>:<url-safe-password>@localhost:5480/<database>"
-```
-
-The example below shows the URL shape; replace its placeholders with your
-database name and URL-safe credentials.
+The backend and ETL read the root `.env`. Configure `POSTGRES_HOST`,
+`POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER` and `POSTGRES_PASSWORD` there.
 
 ### Source CSV
 
-Place the source CSV in:
+The checked-in source CSV is in:
 
 ```text
-/etl/data/seed/
+data/db/seed/
 ```
 
 The default filename is:
@@ -268,25 +257,25 @@ The default filename is:
 SEED_FILE = "iovation_demo_synthetic_100"
 ```
 
-The ETL profile mounts `data/db/seed` at `/etl/data/seed` and reads:
+The ingestion script resolves the seed directory relative to its own file:
 
 ```text
-/etl/data/seed/iovation_demo_synthetic_100.csv
+data/db/seed/iovation_demo_synthetic_100.csv
 ```
 
 ### Run Order
 
-The ETL components should be executed in this order:
+From the `aml-risk-platform` directory, run:
 
-```text
-1. From `aml-risk-platform`, configure `.env` and start PostgreSQL with `docker compose up -d postgres`.
-2. Wait for the database health check; the schema is deployed automatically on first startup with a new volume.
-3. Run ingestion and normalized loading with `docker compose --profile etl run --rm etl-engine`.
+```powershell
+python -m pip install -r .\data\etl\requirements.txt
+python .\data\etl\src\ingestion.py
+python .\data\etl\src\normalized_load.py
 ```
 
-The current Compose ETL job runs raw iovation ingestion and normalized loading
-only. Subsequent network, denormalized dataset and analytics steps are not
-wired into this container.
+Ingestion must complete successfully before normalized loading begins.
+Subsequent network, denormalized dataset and analytics steps are not included
+in these scripts.
 
 ---
 
@@ -296,14 +285,16 @@ The ingestion script provides configuration for:
 
 ```python
 DEBUG_MODE = 1
-PRINT_REJECTION_REASONS = False
+PRINT_REJECTION_REASONS = True
 EXPORT_REJECTION_TO_CSV = False
 ```
 
-Rejected rows can optionally be exported to:
+Set `EXPORT_REJECTION_TO_CSV = True` to export rejected rows next to the source
+CSV, or set `REJECT_FILEPATH` in the environment to choose another path. The
+default output path is:
 
 ```text
-/etl/data/rejected_iovation_demo_synthetic_100.csv
+data/db/seed/rejected_iovation_demo_synthetic_100.csv
 ```
 
 ---

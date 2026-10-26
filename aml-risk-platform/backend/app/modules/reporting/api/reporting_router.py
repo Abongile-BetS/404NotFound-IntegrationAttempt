@@ -2,7 +2,6 @@ from fastapi import APIRouter
 
 from app.modules.reporting.application.reporting_service import ReportingService
 
-
 router = APIRouter(tags=["Reporting"])
 service = ReportingService()
 

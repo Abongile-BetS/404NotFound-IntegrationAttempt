@@ -2,23 +2,54 @@ from app.shared.database.connection import fetch_all
 
 
 class ScreeningRepository:
-    async def list_all(self):
+    async def list_all(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+    ):
         return await fetch_all(
             self._screening_query()
-            + " ORDER BY s.screened_at DESC NULLS LAST, s.id DESC"
+            + " ORDER BY s.screened_at DESC NULLS LAST, s.id DESC "
+            + "LIMIT :limit OFFSET :offset",
+            {"limit": limit, "offset": offset},
         )
 
-    async def get_customer_screening(self, customer_id: str):
+    async def get_customer_screening(
+        self,
+        customer_id: str,
+        limit: int = 100,
+        offset: int = 0,
+    ):
         return await fetch_all(
-            self._screening_query()
-            + " "
+            self._screening_query() + " "
             "WHERE c.customer_guid::text = :customer_id "
-            "ORDER BY s.screened_at DESC NULLS LAST, s.id DESC",
-            {"customer_id": customer_id},
+            "ORDER BY s.screened_at DESC NULLS LAST, s.id DESC "
+            "LIMIT :limit OFFSET :offset",
+            {
+                "customer_id": customer_id,
+                "limit": limit,
+                "offset": offset,
+            },
         )
 
-    async def get_dashboard_data(self):
-        results = await self.list_all()
+    async def get_dashboard_data(self, limit: int = 100, offset: int = 0):
+        results = await self.list_all(limit=limit, offset=offset)
+        counts = await fetch_all(
+            """
+            SELECT
+                COUNT(*) AS total,
+                COUNT(*) FILTER (WHERE match_found IS TRUE) AS matched,
+                COUNT(*) FILTER (
+                    WHERE lower(COALESCE(result, '')) IN
+                        ('clear', 'no match', 'approved', 'verified')
+                ) AS cleared,
+                COUNT(*) FILTER (
+                    WHERE lower(COALESCE(result, '')) IN
+                        ('escalated', 'confirmed match')
+                ) AS escalated
+            FROM public.screening_result
+            """
+        )
         breakdown = await fetch_all(
             """
             SELECT COALESCE(result, 'Unknown') AS name, COUNT(*) AS value
@@ -52,19 +83,37 @@ class ScreeningRepository:
             """
         )
         trend.reverse()
-        total = len(results)
-        match_count = sum(1 for result in results if result["match_found"])
-        cleared_count = sum(
-            1
-            for result in results
-            if str(result["status"]).lower() in {"clear", "no match", "approved", "verified"}
-        )
+        summary = counts[0]
         return {
             "kpis": [
-                {"label": "Total Screened", "value": str(total), "change": "—", "positive": True, "tone": "purple"},
-                {"label": "Matched Results", "value": str(match_count), "change": "—", "positive": False, "tone": "pink"},
-                {"label": "Cleared", "value": str(cleared_count), "change": "—", "positive": True, "tone": "blue"},
-                {"label": "Escalated", "value": str(sum(1 for result in results if str(result["status"]).lower() in {"escalated", "confirmed match"})), "change": "—", "positive": False, "tone": "amber"},
+                {
+                    "label": "Total Screened",
+                    "value": str(summary["total"]),
+                    "change": "—",
+                    "positive": True,
+                    "tone": "purple",
+                },
+                {
+                    "label": "Matched Results",
+                    "value": str(summary["matched"]),
+                    "change": "—",
+                    "positive": False,
+                    "tone": "pink",
+                },
+                {
+                    "label": "Cleared",
+                    "value": str(summary["cleared"]),
+                    "change": "—",
+                    "positive": True,
+                    "tone": "blue",
+                },
+                {
+                    "label": "Escalated",
+                    "value": str(summary["escalated"]),
+                    "change": "—",
+                    "positive": False,
+                    "tone": "amber",
+                },
             ],
             "trend": trend,
             "breakdown": breakdown,
@@ -72,12 +121,25 @@ class ScreeningRepository:
                 {
                     "name": row["name"],
                     "matches": row["matches"],
-                    "percentage": round(row["matches"] * 100 / row["total"]) if row["total"] else 0,
+                    "percentage": round(row["matches"] * 100 / row["total"])
+                    if row["total"]
+                    else 0,
                 }
                 for row in sources
             ],
             "results": [
-                {key: result[key] for key in ("id", "customer", "customerId", "source", "status", "score", "time")}
+                {
+                    key: result[key]
+                    for key in (
+                        "id",
+                        "customer",
+                        "customerId",
+                        "source",
+                        "status",
+                        "score",
+                        "time",
+                    )
+                }
                 for result in results
             ],
             "queue": [],

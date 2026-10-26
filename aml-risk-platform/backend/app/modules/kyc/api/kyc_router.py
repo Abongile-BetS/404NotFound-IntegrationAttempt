@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.modules.kyc.application.kyc_service import KycService
 from app.modules.kyc.schemas.kyc_response import KycResponse
+from app.shared.pagination import PageLimit, PageOffset
 
 router = APIRouter(prefix="/kyc", tags=["KYC"])
 
@@ -9,8 +10,8 @@ service = KycService()
 
 
 @router.get("", response_model=list[KycResponse])
-async def list_kyc_records():
-    return await service.list_records()
+async def list_kyc_records(limit: PageLimit = 100, offset: PageOffset = 0):
+    return await service.list_records(limit=limit, offset=offset)
 
 
 @router.get("/dashboard")

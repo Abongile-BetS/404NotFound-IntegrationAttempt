@@ -1,9 +1,8 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import HTTPException
 
 from app.shared.database.connection import fetch_all, fetch_one
-
 
 _WORKSPACES = {
     "dashboard": {
@@ -293,7 +292,9 @@ async def get_workspace_data(module: str):
     if summary is None:
         raise RuntimeError("Unable to retrieve workspace totals")
     rows = await fetch_all(workspace["query"]) if workspace["query"] else []
-    trend = await fetch_all(workspace["trend_query"]) if workspace["trend_query"] else []
+    trend = (
+        await fetch_all(workspace["trend_query"]) if workspace["trend_query"] else []
+    )
     trend.reverse()
     latest_model = await fetch_one(
         """
@@ -304,7 +305,7 @@ async def get_workspace_data(module: str):
         LIMIT 1
         """
     )
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    now = datetime.now(UTC).isoformat(timespec="seconds")
 
     module_metrics = {
         "dashboard": [

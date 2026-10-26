@@ -2,7 +2,7 @@ from app.shared.database.connection import fetch_all, fetch_one
 
 
 class KycRepository:
-    async def list_all(self):
+    async def list_all(self, limit: int = 100, offset: int = 0):
         return await fetch_all(
             """
             SELECT
@@ -13,7 +13,9 @@ class KycRepository:
             FROM public.kyc_record AS k
             JOIN public.customer AS c ON c.id = k.fk_customer_id
             ORDER BY k.verified_at DESC NULLS LAST, k.id DESC
-            """
+            LIMIT :limit OFFSET :offset
+            """,
+            {"limit": limit, "offset": offset},
         )
 
     async def get_customer_kyc(self, customer_id: str):

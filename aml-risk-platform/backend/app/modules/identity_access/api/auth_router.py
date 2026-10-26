@@ -4,7 +4,6 @@ from app.modules.identity_access.application.auth_service import AuthService
 from app.modules.identity_access.schemas.user_response import UserResponse
 from app.shared.auth.dependencies import get_current_user, require_role
 
-
 router = APIRouter(tags=["Identity Access"])
 service = AuthService()
 
