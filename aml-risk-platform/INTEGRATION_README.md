@@ -8,16 +8,23 @@ AML Monitoring, KYC/CDD, Adverse Media, PEP & Sanctions, Network Intelligence, R
 ## Source-code reuse
 Relevant AML-KYC-Enterprise-Risk-Upgrade services, tests and documentation are preserved in `integrations/aml_kyc_risk_upgrade_reference/`. They are **reference-only** because their SQLAlchemy data models differ from 404NotFound's SQL schema. The added evaluator uses an explicit adapter for the existing tables rather than replacing the host's customer or risk modules.
 
-## Start
-From this directory, copy `.env.example` to `.env` and replace all three password values. Use URL-safe characters for `POSTGRES_PASSWORD` because it is included in the backend database URL. Then run `docker compose config --quiet` followed by `docker compose up --build -d`. This starts PostgreSQL, Keycloak, the FastAPI backend and the frontend. On a new PostgreSQL volume, the included schema deployment script runs automatically. The local `aml-risk` Keycloak realm is imported from `infrastructure/keycloak/aml-risk-realm.json`. Open the frontend at `http://localhost:5173`, the backend docs at `http://localhost:8000/docs`, and Keycloak at `http://localhost:8080`. Old `/intelligence/*` paths redirect to their merged host pages. API details are in `docs/API_REFERENCE.md`.
+## Run locally
 
-The root `.env` is the only environment file used by Docker Compose. Frontend `VITE_*` settings are supplied as build arguments from that file's `KEYCLOAK_*` and port values; rebuild the frontend after changing them. The frontend `.env.example` is only for running Vite outside Docker.
+Install PostgreSQL, Keycloak, Python and Node.js on the host. Then follow
+[`docs/LOCAL_SETUP.md`](docs/LOCAL_SETUP.md) to configure `.env`, create the
+database, deploy the schema, import the local Keycloak realm, and start the
+backend and frontend in separate terminals. Docker is not used or required.
+The local API is available at `http://localhost:8000/docs`; the frontend is
+at `http://localhost:5173`. Old `/intelligence/*` paths redirect to their
+merged host pages. API details are in `docs/API_REFERENCE.md`.
 
-The ETL is an optional one-shot profile, not part of normal startup. After the database is ready, run `docker compose --profile etl run --rm etl-engine` to ingest the included iovation demo CSV and load normalized records. It uses the same PostgreSQL credentials as the rest of the stack.
+Optional ETL: install `data/etl/requirements.txt`, then run the ingestion and
+normalized-load Python scripts in that order. They use the database settings
+from the same root `.env`.
 
 ## Limitations
 - No live external sanctions/PEP/adverse media connector, identity verification, OCR or Iovation integration is added.
 - AML rule thresholds and points are static constants; the displayed host rule catalogue does not configure or approve them.
 - Assessments and AI reports are not persisted; no background triggers or automatic alert/case creation are added.
 - The extension scoring methodology is illustrative and requires compliance approval.
-- Docker startup, PostgreSQL/Keycloak integration and Gemma inference still need environment-level validation; this build was not run in Docker here.
+- Native PostgreSQL/Keycloak integration and Gemma inference require validation on a machine with those services installed.

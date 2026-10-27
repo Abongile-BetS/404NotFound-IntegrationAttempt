@@ -4,7 +4,6 @@ from app.modules.risk_scoring.infrastructure.risk_scoring_repository import (
 
 
 class RiskScoringService:
-
     def __init__(self):
         self.repository = RiskScoringRepository()
 

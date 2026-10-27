@@ -40,12 +40,10 @@ const sections = [
 const items = sections.flatMap(section => section.items);
 
 function Sidebar({
-    module,
     data,
     onClose,
     onLogout,
 }: {
-    module: string;
     data: WorkspaceResponse;
     onClose?: () => void;
     onLogout: () => Promise<void>
@@ -146,7 +144,7 @@ export default function WorkspaceLayout({
     return (
         <div className="min-h-screen bg-[#f7f7fb] text-slate-900">
             <aside className="fixed inset-y-0 left-0 z-30 hidden w-[236px] lg:flex">
-                <Sidebar module={module} data={data} onLogout={logout} />
+                <Sidebar data={data} onLogout={logout} />
             </aside>
 
             {mobileNav && (
@@ -159,7 +157,6 @@ export default function WorkspaceLayout({
                         onClick={(event) => event.stopPropagation()}
                     >
                         <Sidebar
-                            module={module}
                             data={data}
                             onClose={() => setMobileNav(false)}
                             onLogout={logout}

@@ -1,16 +1,20 @@
 from fastapi import APIRouter
 
-from app.modules.transaction_monitoring.application.transaction_monitoring_service import TransactionMonitoringService
-from app.modules.transaction_monitoring.schemas.transaction_response import TransactionResponse
-
+from app.modules.transaction_monitoring.application.transaction_monitoring_service import (
+    TransactionMonitoringService,
+)
+from app.modules.transaction_monitoring.schemas.transaction_response import (
+    TransactionResponse,
+)
+from app.shared.pagination import PageLimit, PageOffset
 
 router = APIRouter(prefix="/transactions", tags=["Transaction Monitoring"])
 service = TransactionMonitoringService()
 
 
 @router.get("", response_model=list[TransactionResponse])
-async def list_transactions():
-    return await service.list_transactions()
+async def list_transactions(limit: PageLimit = 100, offset: PageOffset = 0):
+    return await service.list_transactions(limit=limit, offset=offset)
 
 
 @router.get("/dashboard")

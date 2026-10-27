@@ -4,76 +4,76 @@
 \echo 'Creating Schemas'
 \echo '========================================'
 
-\i /tmp/db_setup/001_schemas.sql
+\ir 001_schemas.sql
 
 \echo '========================================'
 \echo 'Creating Customer Domain'
 \echo '========================================'
 
-\i /tmp/db_setup/002_customer.sql
-\i /tmp/db_setup/003_account.sql
-\i /tmp/db_setup/004_customer_transaction_type.sql
-\i /tmp/db_setup/i004_customer_transaction_type.sql
-\i /tmp/db_setup/005_financial_transaction.sql
-\i /tmp/db_setup/019_bet.sql
-\i /tmp/db_setup/020_bet_transaction.sql
-\i /tmp/db_setup/021_customer_onboarding.sql
-\i /tmp/db_setup/022_customer_identity_document.sql
+\ir 002_customer.sql
+\ir 003_account.sql
+\ir 004_customer_transaction_type.sql
+\ir i004_customer_transaction_type.sql
+\ir 005_financial_transaction.sql
+\ir 019_bet.sql
+\ir 020_bet_transaction.sql
+\ir 021_customer_onboarding.sql
+\ir 022_customer_identity_document.sql
 
 \echo '========================================'
 \echo 'Creating KYC and Screening Domain'
 \echo '========================================'
 
-\i /tmp/db_setup/006_kyc_record.sql
-\i /tmp/db_setup/007_screening_result.sql
+\ir 006_kyc_record.sql
+\ir 007_screening_result.sql
 
 \echo '========================================'
 \echo 'Creating Network Intelligence Domain'
 \echo '========================================'
 
-\i /tmp/db_setup/008_device.sql
-\i /tmp/db_setup/009_customer_device.sql
-\i /tmp/db_setup/010_iovation_event.sql
+\ir 008_device.sql
+\ir 009_customer_device.sql
+\ir 010_iovation_event.sql
 
 \echo '========================================'
 \echo 'Creating Raw Data Layer'
 \echo '========================================'
 
-\i /tmp/db_setup/011_raw_iovation.sql
+\ir 011_raw_iovation.sql
 
 \echo '========================================'
 \echo 'Creating Rule Engine'
 \echo '========================================'
 
-\i /tmp/db_setup/012_rules.sql
-\i /tmp/db_setup/013_rule_parameter.sql
-\i /tmp/db_setup/014_rule_version.sql
-\i /tmp/db_setup/015_rule_result.sql
+\ir 012_rules.sql
+\ir 013_rule_parameter.sql
+\ir 014_rule_version.sql
+\ir 015_rule_result.sql
 
 \echo '========================================'
 \echo 'Creating Risk Engine'
 \echo '========================================'
 
-\i /tmp/db_setup/016_risk_event.sql
-\i /tmp/db_setup/017_risk_score.sql
+\ir 016_risk_event.sql
+\ir 017_risk_score.sql
 
 \echo '========================================'
 \echo 'Creating Alerting Layer'
 \echo '========================================'
 
-\i /tmp/db_setup/018_alert.sql
+\ir 018_alert.sql
 
 \echo '========================================'
 \echo 'Inserting Data And Making db_setup Changes'
 \echo '========================================'
 
-\i /tmp/db_setup/i005_financial_transaction.sql
-\i /tmp/db_setup/i006_kyc_record.sql
-\i /tmp/db_setup/i019_bet.sql
-\i /tmp/db_setup/dml020_bet.sql
-\i /tmp/db_setup/i020_bet_transaction.sql
-\i /tmp/db_setup/i021a_customer_onboarding.sql
-\i /tmp/db_setup/i021b_customer_onboarding.sql
+\ir i005_financial_transaction.sql
+\ir i006_kyc_record.sql
+\ir i019_bet.sql
+\ir dml020_bet.sql
+\ir i020_bet_transaction.sql
+\ir i021a_customer_onboarding.sql
+\ir i021b_customer_onboarding.sql
 
 
 

@@ -1,12 +1,12 @@
-from app.shared.database.connection import fetch_all
 from app.modules.workspace.api.workspace_router import get_workspace_data
+from app.shared.database.connection import fetch_all
 
 
 class AlertsService:
     async def get_workspace_dashboard(self):
         return await get_workspace_data("alerts")
 
-    async def list_alerts(self):
+    async def list_alerts(self, limit: int = 100, offset: int = 0):
         return await fetch_all(
             """
             SELECT
@@ -19,5 +19,7 @@ class AlertsService:
             FROM public.alert AS a
             JOIN public.customer AS c ON c.id = a.fk_customer_id
             ORDER BY a.created_at DESC NULLS LAST, a.id DESC
-            """
+            LIMIT :limit OFFSET :offset
+            """,
+            {"limit": limit, "offset": offset},
         )

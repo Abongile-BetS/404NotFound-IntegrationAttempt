@@ -82,10 +82,38 @@ class ReportingService:
         )
         return {
             "kpis": [
-                {"label": "Total Customers", "value": str(counts["customers"]), "change": "—", "positive": True, "tone": "purple", "points": []},
-                {"label": "KYC Pending", "value": str(counts["kyc_pending"]), "change": "—", "positive": False, "tone": "pink", "points": []},
-                {"label": "Verified Customers", "value": str(counts["kyc_verified"]), "change": "—", "positive": True, "tone": "blue", "points": []},
-                {"label": "Requires Action", "value": str(counts["kyc_action_required"]), "change": "—", "positive": False, "tone": "amber", "points": []},
+                {
+                    "label": "Total Customers",
+                    "value": str(counts["customers"]),
+                    "change": "—",
+                    "positive": True,
+                    "tone": "purple",
+                    "points": [],
+                },
+                {
+                    "label": "KYC Pending",
+                    "value": str(counts["kyc_pending"]),
+                    "change": "—",
+                    "positive": False,
+                    "tone": "pink",
+                    "points": [],
+                },
+                {
+                    "label": "Verified Customers",
+                    "value": str(counts["kyc_verified"]),
+                    "change": "—",
+                    "positive": True,
+                    "tone": "blue",
+                    "points": [],
+                },
+                {
+                    "label": "Requires Action",
+                    "value": str(counts["kyc_action_required"]),
+                    "change": "—",
+                    "positive": False,
+                    "tone": "amber",
+                    "points": [],
+                },
             ],
             "activity": [
                 {
@@ -119,8 +147,7 @@ class ReportingService:
                 for row in trend
             ],
             "document_types": [
-                {"name": row["name"], "value": str(row["count"])}
-                for row in documents
+                {"name": row["name"], "value": str(row["count"])} for row in documents
             ],
         }
 

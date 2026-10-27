@@ -1,12 +1,12 @@
-from app.shared.database.connection import fetch_all
 from app.modules.workspace.api.workspace_router import get_workspace_data
+from app.shared.database.connection import fetch_all
 
 
 class TransactionMonitoringService:
     async def get_workspace_dashboard(self):
         return await get_workspace_data("transactions")
 
-    async def list_transactions(self):
+    async def list_transactions(self, limit: int = 100, offset: int = 0):
         return await fetch_all(
             """
             SELECT
@@ -21,5 +21,7 @@ class TransactionMonitoringService:
             JOIN public.account AS a ON a.id = t.fk_account_id
             JOIN public.customer_transaction_type AS tt ON tt.id = t.fk_transaction_type_id
             ORDER BY t.transaction_timestamp DESC, t.id DESC
-            """
+            LIMIT :limit OFFSET :offset
+            """,
+            {"limit": limit, "offset": offset},
         )

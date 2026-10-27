@@ -2,15 +2,15 @@ from fastapi import APIRouter
 
 from app.modules.alerts.application.alerts_service import AlertsService
 from app.modules.alerts.schemas.alert_response import AlertResponse
-
+from app.shared.pagination import PageLimit, PageOffset
 
 router = APIRouter(prefix="/alerts", tags=["Alerts"])
 service = AlertsService()
 
 
 @router.get("", response_model=list[AlertResponse])
-async def list_alerts():
-    return await service.list_alerts()
+async def list_alerts(limit: PageLimit = 100, offset: PageOffset = 0):
+    return await service.list_alerts(limit=limit, offset=offset)
 
 
 @router.get("/dashboard")

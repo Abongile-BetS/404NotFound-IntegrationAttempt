@@ -95,30 +95,33 @@ The platform follows:
 
 The MVP is intentionally designed as a modular monolith to support rapid delivery, maintainability, and future scalability.
 
-## Run locally with Docker
+## Run locally
 
-The runnable application and its Compose file are in `aml-risk-platform`. From PowerShell:
+The application source is in `aml-risk-platform`. Install PostgreSQL, Keycloak,
+Python 3.12+, and Node.js 24+ locally. Follow
+[the local setup guide](./aml-risk-platform/docs/LOCAL_SETUP.md) to configure
+the database, authentication realm, and environment.
+
+From PowerShell, follow the local setup guide or run its setup helper:
 
 ```powershell
 Set-Location .\aml-risk-platform
-Copy-Item .env.example .env
+.\scripts\setup-local.ps1
 ```
 
-Edit `.env` and replace all three password placeholders. Use URL-safe characters for `POSTGRES_PASSWORD`. With Docker Desktop running, validate and start the stack:
+Edit `.env` with your local PostgreSQL credentials, start PostgreSQL, deploy
+the schema, and start Keycloak as described in the guide. Then run:
 
 ```powershell
-docker compose config --quiet
-docker compose up --build -d
+.\scripts\run-local.ps1
 ```
 
-This starts PostgreSQL, Keycloak, the FastAPI backend and the frontend. Open:
+The frontend is at `http://localhost:5173`, backend docs at
+`http://localhost:8000/docs`, and local Keycloak at `http://localhost:8080`.
+PostgreSQL and Keycloak must be installed and running outside the application;
+this repository no longer includes Docker configuration.
 
-- Frontend: `http://localhost:5173`
-- Backend API docs: `http://localhost:8000/docs`
-- Keycloak: `http://localhost:8080`
-
-The database schema is deployed automatically only when PostgreSQL creates a new data volume. To stop the stack without deleting data, run `docker compose down`. The optional demo ETL job can be run after startup with `docker compose --profile etl run --rm etl-engine`.
-
-See [aml-risk-platform/INTEGRATION_README.md](./aml-risk-platform/INTEGRATION_README.md) for integration details and [aml-risk-platform/docs/CONSOLIDATION_AND_DOCKER.md](./aml-risk-platform/docs/CONSOLIDATION_AND_DOCKER.md) for deployment limitations. Docker is not installed in every development environment, so the Compose stack must be built and run on a machine with Docker Desktop.
+See [aml-risk-platform/INTEGRATION_README.md](./aml-risk-platform/INTEGRATION_README.md)
+for integration details.
 
 # 404NotFound-IntegrationAttempt

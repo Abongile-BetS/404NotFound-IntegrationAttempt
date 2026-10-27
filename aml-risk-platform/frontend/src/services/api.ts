@@ -123,8 +123,29 @@ export type WorkspaceResponse = {
     view: WorkspaceViewData;
 };
 
+export type PaginationOptions = {
+    limit?: number;
+    offset?: number;
+};
+
+function paginatedPath(path: string, options: PaginationOptions = {}) {
+    const query = new URLSearchParams({
+        limit: String(options.limit ?? 100),
+        offset: String(options.offset ?? 0),
+    });
+    return `${path}?${query.toString()}`;
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
-    const response = await fetch(`${API_URL}${path}`);
+    await keycloak.updateToken(30);
+    if (!keycloak.token) {
+        throw new Error("Not authenticated");
+    }
+    const response = await fetch(`${API_URL}${path}`, {
+        headers: {
+            Authorization: `Bearer ${keycloak.token}`,
+        },
+    });
 
     if (!response.ok) {
         throw new Error(`API request failed: ${response.status}`);
@@ -137,28 +158,36 @@ export function getDashboardData() {
     return apiGet<DashboardResponse>("/dashboard");
 }
 
-export function getScreeningResults() {
-    return apiGet<ScreeningResult[]>("/screening");
+export function getScreeningResults(options?: PaginationOptions) {
+    return apiGet<ScreeningResult[]>(paginatedPath("/screening", options));
 }
 
-export function getScreeningDashboard() {
-    return apiGet<ScreeningDashboardResponse>("/screening/dashboard");
+export function getScreeningDashboard(options?: PaginationOptions) {
+    return apiGet<ScreeningDashboardResponse>(
+        paginatedPath("/screening/dashboard", options),
+    );
 }
 
-export function getCustomers() {
-    return apiGet<Array<Record<string, unknown>>>("/customers");
+export function getCustomers(options?: PaginationOptions) {
+    return apiGet<Array<Record<string, unknown>>>(
+        paginatedPath("/customers", options),
+    );
 }
 
-export function getAlerts() {
-    return apiGet<Array<Record<string, unknown>>>("/alerts");
+export function getAlerts(options?: PaginationOptions) {
+    return apiGet<Array<Record<string, unknown>>>(
+        paginatedPath("/alerts", options),
+    );
 }
 
 export function getInvestigations() {
     return apiGet<Array<Record<string, unknown>>>("/investigations");
 }
 
-export function getTransactions() {
-    return apiGet<Array<Record<string, unknown>>>("/transactions");
+export function getTransactions(options?: PaginationOptions) {
+    return apiGet<Array<Record<string, unknown>>>(
+        paginatedPath("/transactions", options),
+    );
 }
 
 export function getDashboardWorkspace() {
