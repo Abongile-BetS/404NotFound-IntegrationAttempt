@@ -67,6 +67,10 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to install backend dependencies."
     }
+    & .\.venv\Scripts\python.exe -m pip install -r ..\data\etl\requirements.txt
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to install ETL dependencies."
+    }
 }
 finally {
     Pop-Location

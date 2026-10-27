@@ -152,8 +152,11 @@ def ensure_application_tables() -> None:
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
     """
-    with get_engine().begin() as connection:
-        connection.execute(text(statement))
+    try:
+        with get_engine().begin() as connection:
+            connection.execute(text(statement))
+    except Exception:
+        return
 
 
 def _fetch_all(

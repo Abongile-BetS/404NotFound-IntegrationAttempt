@@ -13,8 +13,8 @@ dist/
 dist-ssr/
 *.local
 
-# Environment variables
-.env
+# Environment variables (tracked for this temporary repo)
+# .env
 .env.local
 
 # Embedded PostgreSQL data
