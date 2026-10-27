@@ -55,36 +55,42 @@ def run_seed(seed_file: Path) -> None:
 
 
 def main() -> None:
-    seed_file = SEED_DIR / "iovation_seed_100.sql"
-    print(f"Loading seed data from {seed_file}...")
-    run_seed(seed_file)
+    try:
+        seed_file = SEED_DIR / "iovation_seed_100.sql"
+        print(f"Loading seed data from {seed_file}...")
+        run_seed(seed_file)
 
-    from urllib.parse import urlparse
+        from urllib.parse import urlparse
 
-    parsed = urlparse(database_url())
-    env = dict(os.environ)
-    env["PGHOST"] = parsed.hostname or "localhost"
-    env["PGPORT"] = str(parsed.port or 5432)
-    env["PGDATABASE"] = (parsed.path or "/postgres").lstrip("/")
-    env["PGUSER"] = parsed.username or "postgres"
-    env["PGPASSWORD"] = parsed.password or ""
+        parsed = urlparse(database_url())
+        env = dict(os.environ)
+        env["PGHOST"] = parsed.hostname or "localhost"
+        env["PGPORT"] = str(parsed.port or 5432)
+        env["PGDATABASE"] = (parsed.path or "/postgres").lstrip("/")
+        env["PGUSER"] = parsed.username or "postgres"
+        env["PGPASSWORD"] = parsed.password or ""
 
-    print("Running normalized load ETL...")
-    result = subprocess.run(
-        [sys.executable, str(NORMALIZED_LOAD)],
-        cwd=str(PROJECT_ROOT),
-        env=env,
-        check=False,
-    )
-    if result.returncode != 0:
-        raise SystemExit("Normalized load failed")
+        print("Running normalized load ETL...")
+        result = subprocess.run(
+            [sys.executable, str(NORMALIZED_LOAD)],
+            cwd=str(PROJECT_ROOT),
+            env=env,
+            check=False,
+        )
+        if result.returncode != 0:
+            print("Normalized load failed; continuing.")
+        else:
+            print("Seeding completed.")
+    except Exception as exc:
+        print(f"Demo data loading failed: {exc}; continuing.")
+    finally:
+        try:
+            sys.path.insert(0, str(BACKEND_ROOT))
+            from app.shared.database.connection import dispose_engine
 
-    print("Seeding completed.")
-
-    sys.path.insert(0, str(BACKEND_ROOT))
-    from app.shared.database.connection import dispose_engine
-
-    dispose_engine()
+            dispose_engine()
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

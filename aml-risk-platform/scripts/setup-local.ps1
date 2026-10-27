@@ -78,7 +78,7 @@ finally {
 
 Push-Location $frontend
 try {
-    & npm ci
+    & npm install
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to install frontend dependencies."
     }

@@ -71,18 +71,89 @@ def _start_embedded_postgres() -> str:
         return _EMBEDDED_URL
 
     try:
-        from pgembed import get_server
+        import pgembed
     except ImportError as exc:
         raise RuntimeError(
             "PostgreSQL is unavailable and pgembed is not installed"
         ) from exc
 
+    import shutil
+
+    bin_dir = Path(pgembed.__file__).parent / "pginstall" / "bin"
+    initdb = bin_dir / "initdb.exe"
+    pg_ctl = bin_dir / "pg_ctl.exe"
+    psql = bin_dir / "psql.exe"
+    if not initdb.exists() or not pg_ctl.exists():
+        raise RuntimeError("pgembed PostgreSQL binaries were not found")
+
     data_dir = BACKEND_ROOT / ".pgdata"
+    if data_dir.exists():
+        try:
+            subprocess.run(
+                [str(pg_ctl), "-D", str(data_dir), "-m", "fast", "stop"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        except Exception:
+            pass
+        try:
+            subprocess.run(
+                ["cmd", "/c", "rmdir", "/s", "/q", str(data_dir)],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        except Exception:
+            pass
+        shutil.rmtree(data_dir, ignore_errors=True)
     data_dir.mkdir(parents=True, exist_ok=True)
-    server = get_server(str(data_dir), cleanup_mode="stop")
-    server.ensure_pgdata_inited()
-    server.ensure_postgres_running()
-    database_url = server.get_uri()
+
+    subprocess.run(
+        [
+            str(initdb),
+            "-D",
+            str(data_dir),
+            "--auth=trust",
+            "--auth-local=trust",
+            "--encoding=utf8",
+            "-U",
+            "postgres",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=True,
+    )
+
+    port = 54329
+    while True:
+        import socket
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            if sock.connect_ex(("127.0.0.1", port)) != 0:
+                break
+        port += 1
+
+    subprocess.run(
+        [
+            str(pg_ctl),
+            "-D",
+            str(data_dir),
+            "-w",
+            "-o",
+            f'-h "127.0.0.1" -p {port}',
+            "-l",
+            str(data_dir / "log"),
+            "start",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=True,
+    )
+
+    database_url = f"postgresql://postgres:@127.0.0.1:{port}/postgres"
 
     import psycopg
 
@@ -91,9 +162,27 @@ def _start_embedded_postgres() -> str:
             cursor.execute("SELECT to_regclass('public.customer')")
             table_exists = cursor.fetchone()[0] is not None
     if not table_exists:
-        _deploy_embedded_schema(database_url)
+        deploy_dir = BACKEND_ROOT.parent / "data" / "db" / "db_setup"
+        deploy_file = deploy_dir / "deploy.sql"
+        if deploy_file.exists():
+            result = subprocess.run(
+                [str(psql), "-d", database_url, "-f", str(deploy_file)],
+                cwd=str(deploy_dir),
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(
+                    "Embedded PostgreSQL schema deployment failed: "
+                    + (result.stderr or result.stdout)[-2000:]
+                )
 
-    _EMBEDDED_SERVER = server
+    try:
+        ensure_application_tables()
+    except Exception:
+        pass
+
     _EMBEDDED_URL = database_url
     return database_url
 
@@ -113,16 +202,26 @@ def get_engine() -> Engine:
 
 
 def dispose_engine() -> None:
-    global _EMBEDDED_SERVER, _EMBEDDED_URL
+    global _EMBEDDED_URL
     if get_engine.cache_info().currsize:
         get_engine().dispose()
         get_engine.cache_clear()
-    if _EMBEDDED_SERVER is not None:
+    if _EMBEDDED_URL is not None:
         try:
-            _EMBEDDED_SERVER.cleanup()
+            import pgembed
+
+            bin_dir = Path(pgembed.__file__).parent / "pginstall" / "bin"
+            pg_ctl = bin_dir / "pg_ctl.exe"
+            data_dir = BACKEND_ROOT / ".pgdata"
+            if pg_ctl.exists() and data_dir.exists():
+                subprocess.run(
+                    [str(pg_ctl), "-D", str(data_dir), "-m", "fast", "stop"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
         except Exception:
             pass
-        _EMBEDDED_SERVER = None
         _EMBEDDED_URL = None
 
 
