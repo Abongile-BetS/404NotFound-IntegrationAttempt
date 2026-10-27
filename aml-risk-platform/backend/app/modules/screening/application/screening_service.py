@@ -28,3 +28,15 @@ class ScreeningService:
             limit=limit,
             offset=offset,
         )
+
+    async def update_result(
+        self,
+        screening_id: str,
+        result: str | None = None,
+        match_found: bool | None = None,
+    ):
+        return await self.repository.update_result(
+            screening_id,
+            result=result,
+            match_found=match_found,
+        )

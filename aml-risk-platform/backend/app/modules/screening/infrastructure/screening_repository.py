@@ -1,4 +1,4 @@
-from app.shared.database.connection import fetch_all
+from app.shared.database.connection import fetch_all, fetch_one
 
 
 class ScreeningRepository:
@@ -10,7 +10,7 @@ class ScreeningRepository:
         return await fetch_all(
             self._screening_query()
             + " ORDER BY s.screened_at DESC NULLS LAST, s.id DESC "
-            + "LIMIT :limit OFFSET :offset",
+            "LIMIT :limit OFFSET :offset",
             {"limit": limit, "offset": offset},
         )
 
@@ -21,8 +21,7 @@ class ScreeningRepository:
         offset: int = 0,
     ):
         return await fetch_all(
-            self._screening_query() + " "
-            "WHERE c.customer_guid::text = :customer_id "
+            self._screening_query() + " WHERE c.customer_guid::text = :customer_id "
             "ORDER BY s.screened_at DESC NULLS LAST, s.id DESC "
             "LIMIT :limit OFFSET :offset",
             {
@@ -144,6 +143,27 @@ class ScreeningRepository:
             ],
             "queue": [],
         }
+
+    async def update_result(
+        self,
+        screening_id: str,
+        result: str | None = None,
+        match_found: bool | None = None,
+    ):
+        return await fetch_one(
+            """
+            UPDATE public.screening_result
+            SET result = COALESCE(:result, result),
+                match_found = COALESCE(:match_found, match_found)
+            WHERE screening_guid::text = :screening_id
+            RETURNING screening_guid::text AS id, result, match_found
+            """,
+            {
+                "screening_id": screening_id,
+                "result": result,
+                "match_found": match_found,
+            },
+        )
 
     @staticmethod
     def _screening_query():

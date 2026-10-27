@@ -1,6 +1,7 @@
 import keycloak from "./keycloak";
 
 const API_URL = `${(import.meta.env.VITE_API_URL ?? "http://localhost:8000").replace(/\/$/, "")}/api/v1`;
+const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === "true";
 
 export type DashboardKpi = {
     label: string;
@@ -128,7 +129,7 @@ export type PaginationOptions = {
     offset?: number;
 };
 
-function paginatedPath(path: string, options: PaginationOptions = {}) {
+export function paginatedPath(path: string, options: PaginationOptions = {}) {
     const query = new URLSearchParams({
         limit: String(options.limit ?? 100),
         offset: String(options.offset ?? 0),
@@ -137,14 +138,17 @@ function paginatedPath(path: string, options: PaginationOptions = {}) {
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
-    await keycloak.updateToken(30);
-    if (!keycloak.token) {
-        throw new Error("Not authenticated");
+    const headers: Record<string, string> = {};
+    if (!DEV_AUTH_BYPASS) {
+        await keycloak.updateToken(30);
+        if (!keycloak.token) {
+            throw new Error("Not authenticated");
+        }
+        headers.Authorization = `Bearer ${keycloak.token}`;
     }
+
     const response = await fetch(`${API_URL}${path}`, {
-        headers: {
-            Authorization: `Bearer ${keycloak.token}`,
-        },
+        headers,
     });
 
     if (!response.ok) {
@@ -223,20 +227,22 @@ export function getExecutiveWorkspace() {
 }
 
 export async function getCurrentUser() {
-    if (!keycloak.token) {
-        throw new Error("Not authenticated");
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+    };
+    if (!DEV_AUTH_BYPASS) {
+        if (!keycloak.token) {
+            throw new Error("Not authenticated");
+        }
+        await keycloak.updateToken(30);
+        headers.Authorization = `Bearer ${keycloak.token}`;
     }
-
-    await keycloak.updateToken(30);
 
     const response = await fetch(
         `${API_URL}/auth/me`,
         {
             method: "GET",
-            headers: {
-                Authorization: `Bearer ${keycloak.token}`,
-                "Content-Type": "application/json",
-            },
+            headers,
         },
     );
 

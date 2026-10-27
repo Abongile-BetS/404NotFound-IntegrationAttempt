@@ -10,7 +10,7 @@ from faker import Faker
 from psycopg import sql
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-load_dotenv(PROJECT_ROOT / ".env")
+load_dotenv(PROJECT_ROOT / "backend" / ".env")
 
 PG_HOST = os.getenv("PGHOST", os.getenv("POSTGRES_HOST", "localhost"))
 PG_PORT = int(os.getenv("PGPORT", os.getenv("POSTGRES_PORT", "5432")))

@@ -13,6 +13,7 @@ _test_environment = patch.dict(
             "http://localhost:8080/realms/aml-risk/protocol/openid-connect/certs"
         ),
         "KEYCLOAK_AUDIENCE": "aml-api",
+        "DEV_AUTH_BYPASS": "false",
     },
 )
 _test_environment.start()

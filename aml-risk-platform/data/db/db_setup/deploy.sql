@@ -78,5 +78,11 @@
 
 
 \echo '========================================'
+\echo 'Creating Investigation Case Layer'
+\echo '========================================'
+
+\ir 023_investigation_case.sql
+
+\echo '========================================'
 \echo 'DATABASE DEPLOYMENT COMPLETED'
 \echo '========================================'

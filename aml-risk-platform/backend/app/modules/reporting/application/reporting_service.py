@@ -158,7 +158,6 @@ class ReportingService:
                 (SELECT COUNT(*) FROM public.customer) AS customer_count,
                 (SELECT COUNT(*) FROM public.alert
                  WHERE upper(COALESCE(status, '')) IN ('OPEN', 'IN_REVIEW', 'PENDING')) AS open_alert_count,
-                0::bigint AS open_case_count,
                 (SELECT COUNT(*) FROM public.financial_transaction) AS transaction_count
             """
         )

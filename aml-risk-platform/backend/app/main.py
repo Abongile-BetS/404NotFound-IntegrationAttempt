@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from collections.abc import AsyncGenerator
@@ -36,7 +37,7 @@ from app.modules.transaction_monitoring.api.transaction_monitoring_router import
 )
 from app.shared.auth.dependencies import get_current_user
 from app.shared.config import get_settings
-from app.shared.database.connection import dispose_engine
+from app.shared.database.connection import dispose_engine, ensure_application_tables
 
 logger = logging.getLogger("aml.api")
 settings = get_settings()
@@ -45,6 +46,7 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     try:
+        await asyncio.to_thread(ensure_application_tables)
         yield
     finally:
         dispose_engine()
@@ -60,9 +62,10 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
-    allow_credentials=False,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
 )
 
 api_router = APIRouter(

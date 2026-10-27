@@ -97,8 +97,8 @@ SQL = {
         SELECT d.device_guid::text AS id,
                COUNT(DISTINCT cd.fk_customer_id) AS linked_customers,
                d.device_type AS type
-        FROM public.customer_device AS cd
-        JOIN public.device AS d ON d.id = cd.fk_device_id
+        FROM network.customer_device AS cd
+        JOIN network.device AS d ON d.id = cd.fk_device_id
         GROUP BY d.id, d.device_guid, d.device_type
         HAVING COUNT(DISTINCT cd.fk_customer_id) > 1
         ORDER BY linked_customers DESC, d.id

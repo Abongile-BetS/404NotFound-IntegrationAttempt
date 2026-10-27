@@ -9,6 +9,7 @@ from jwt.exceptions import (
 )
 
 from app.shared.auth.jwt import decode_access_token
+from app.shared.config import get_settings
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -19,6 +20,14 @@ def get_current_user(
         Depends(bearer_scheme),
     ],
 ) -> dict[str, object]:
+    if get_settings().dev_auth_bypass:
+        return {
+            "sub": "dev-user",
+            "preferred_username": "dev",
+            "email": "dev@local",
+            "realm_access": {"roles": ["admin", "analyst", "manager"]},
+        }
+
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

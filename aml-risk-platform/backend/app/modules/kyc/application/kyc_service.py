@@ -14,3 +14,17 @@ class KycService:
 
     async def get_customer_kyc(self, customer_id: str):
         return await self.repository.get_customer_kyc(customer_id)
+
+    async def update_customer_kyc(
+        self,
+        customer_id: str,
+        identity_status: str | None = None,
+        address_status: str | None = None,
+        verification_result: str | None = None,
+    ):
+        return await self.repository.update_customer_kyc(
+            customer_id,
+            identity_status=identity_status,
+            address_status=address_status,
+            verification_result=verification_result,
+        )

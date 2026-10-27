@@ -15,7 +15,6 @@ export default function DashboardHome() {
     const [data, setData] = useState<WorkspaceResponse | null>(null);
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
-    const [selected, setSelected] = useState("");
     useEffect(() => {
         let active = true;
         getDashboardWorkspace()
@@ -66,8 +65,6 @@ export default function DashboardHome() {
                     <Records
                         data={data}
                         rows={rows}
-                        selected={selected}
-                        onSelect={setSelected}
                     />
                 </Panel>
                 <div className="space-y-3 xl:col-span-4">

@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.modules.screening.application.screening_service import ScreeningService
 from app.modules.screening.schemas.screening_response import ScreeningResponse
@@ -38,3 +38,15 @@ async def get_screening(
         limit=limit,
         offset=offset,
     )
+
+
+@router.patch("/{screening_id}")
+async def update_screening_result(screening_id: str, payload: dict):
+    result = await service.update_result(
+        screening_id,
+        result=payload.get("result"),
+        match_found=payload.get("match_found"),
+    )
+    if result is None:
+        raise HTTPException(status_code=404, detail="Screening result not found")
+    return result

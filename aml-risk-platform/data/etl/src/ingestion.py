@@ -7,7 +7,7 @@ import psycopg
 from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-load_dotenv(PROJECT_ROOT / ".env")
+load_dotenv(PROJECT_ROOT / "backend" / ".env")
 
 SEED_FILE = "iovation_demo_synthetic_100"
 SEED_FILEPATH = Path(

@@ -26,7 +26,7 @@ Docker configuration or install those services.
 3. From `aml-risk-platform`, copy and edit the environment example:
 
    ```powershell
-   Copy-Item .env.example .env
+   Copy-Item .\backend\.env.example .\backend\.env
    ```
 
    Set `POSTGRES_PASSWORD` to the credential you chose. The backend builds its
@@ -51,16 +51,13 @@ Docker configuration or install those services.
 
    ```powershell
    $env:KEYCLOAK_HOME = "C:\path\to\keycloak"
-   New-Item -ItemType Directory -Force "$env:KEYCLOAK_HOME\data\import" | Out-Null
-   Copy-Item .\infrastructure\keycloak\aml-risk-realm.json `
-     "$env:KEYCLOAK_HOME\data\import\aml-risk-realm.json"
    ```
 
 2. Start Keycloak in development mode from a separate terminal:
 
    ```powershell
    Set-Location $env:KEYCLOAK_HOME
-   .\bin\kc.bat start-dev --import-realm --http-port=8080
+   .\bin\kc.bat start-dev --http-port=8080
    ```
 
    The realm configures the `aml-risk` realm and the public `aml-frontend`
@@ -109,7 +106,7 @@ Open:
 - API documentation: `http://localhost:8000/docs`
 - Keycloak: `http://localhost:8080`
 
-The backend reads the root `.env` regardless of its current working directory.
+The backend reads the `backend/.env` regardless of its current working directory.
 The frontend uses the local defaults in `frontend/.env.example`; copy that file
 to `frontend/.env.local` only if you need to change its Vite settings.
 The backend uses SQLAlchemy 2.x Core with a pooled PostgreSQL engine and
@@ -118,7 +115,7 @@ workflows.
 
 ## Optional ETL
 
-The ETL scripts load the root `.env` automatically. Install their dependencies
+The ETL scripts load the `backend/.env` automatically. Install their dependencies
 and run them from the platform root:
 
 ```powershell

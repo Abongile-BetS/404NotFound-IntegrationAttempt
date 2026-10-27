@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.shared.auth.dependencies import get_current_user
+from app.shared.auth.dependencies import get_current_user, require_role
 from app.shared.config import get_settings
 from app.shared.database.connection import fetch_all, fetch_one
 
@@ -61,6 +61,18 @@ async def catalogue():
     ]
 
 
+@router.put("/rules/{rule_code}/thresholds")
+async def update_thresholds(
+    rule_code: str,
+    payload: dict,
+    _: dict = Depends(require_role("admin")),
+):
+    if rule_code not in THRESHOLDS and rule_code not in {r[0] for r in RULES}:
+        raise HTTPException(status_code=404, detail="Unknown rule")
+    THRESHOLDS[rule_code] = payload
+    return {"rule_code": rule_code, "thresholds": THRESHOLDS[rule_code]}
+
+
 async def customer_context(customer_id: str):
     customer = await fetch_one(
         """
@@ -102,8 +114,8 @@ async def customer_context(customer_id: str):
         """
         SELECT COUNT(DISTINCT own.fk_device_id) AS known_devices,
                COUNT(DISTINCT peer.fk_customer_id) AS linked_customers
-        FROM public.customer_device AS own
-        LEFT JOIN public.customer_device AS peer
+        FROM network.customer_device AS own
+        LEFT JOIN network.customer_device AS peer
           ON peer.fk_device_id = own.fk_device_id
          AND peer.fk_customer_id <> own.fk_customer_id
         WHERE own.fk_customer_id = :customer_id
@@ -142,6 +154,83 @@ async def evaluate_customer(customer_id: str) -> dict[str, Any]:
         screenings,
         network_links=network_links,
     )
+
+    risk_score = await fetch_one(
+        """
+        INSERT INTO risk.risk_score (
+            risk_score_guid, fk_customer_id, score, risk_level,
+            scoring_method, model_version, calculated_at
+        )
+        VALUES (
+            gen_random_uuid(), :customer_id, :score, :risk_level,
+            'enterprise-extension', :model_version, CURRENT_TIMESTAMP
+        )
+        RETURNING id
+        """,
+        {
+            "customer_id": customer["id"],
+            "score": assessment["score"],
+            "risk_level": assessment["risk_level"],
+            "model_version": assessment["model_version"],
+        },
+    )
+    risk_score_id = risk_score["id"] if risk_score else None
+
+    for finding in assessment["findings"]:
+        await fetch_one(
+            """
+            INSERT INTO risk.risk_event (
+                risk_event_guid, fk_customer_id, fk_rule_result_id,
+                event_type, severity, status, detected_at
+            )
+            VALUES (
+                gen_random_uuid(), :customer_id, NULL,
+                :event_type, :severity, 'OPEN', CURRENT_TIMESTAMP
+            )
+            RETURNING id
+            """,
+            {
+                "customer_id": customer["id"],
+                "event_type": finding["rule_code"],
+                "severity": "HIGH" if finding["points"] >= 12 else "MEDIUM",
+            },
+        )
+
+    existing_alert = await fetch_one(
+        """
+        SELECT id
+        FROM public.alert
+        WHERE fk_customer_id = :customer_id
+          AND alert_type = 'AML risk reassessment'
+          AND upper(COALESCE(status, '')) IN ('OPEN', 'IN_REVIEW', 'PENDING')
+        LIMIT 1
+        """,
+        {"customer_id": customer["id"]},
+    )
+    if (
+        existing_alert is None
+        and assessment["score"] >= 25
+        and risk_score_id is not None
+    ):
+        await fetch_one(
+            """
+            INSERT INTO public.alert (
+                alert_guid, fk_customer_id, fk_risk_score_id,
+                alert_type, severity, status, created_at
+            )
+            VALUES (
+                gen_random_uuid(), :customer_id, :risk_score_id,
+                'AML risk reassessment', :severity, 'OPEN', CURRENT_TIMESTAMP
+            )
+            RETURNING id
+            """,
+            {
+                "customer_id": customer["id"],
+                "risk_score_id": risk_score_id,
+                "severity": assessment["risk_level"],
+            },
+        )
+
     return {
         "customer_id": customer_id,
         "customer": {
@@ -150,7 +239,7 @@ async def evaluate_customer(customer_id: str) -> dict[str, Any]:
         },
         "features": customer_features,
         "assessment": assessment,
-        "persisted": False,
+        "persisted": True,
     }
 
 
@@ -173,6 +262,22 @@ async def simulate(payload: Scenario):
         "persisted": False,
         "synthetic": True,
     }
+
+
+@router.get("/reports/{customer_id}")
+async def list_reports(customer_id: str):
+    rows = await fetch_all(
+        """
+        SELECT r.report_guid::text AS report_id, r.report_text AS report,
+               r.model, r.created_at::text AS created_at
+        FROM public.ai_report AS r
+        JOIN public.customer AS c ON c.id = r.fk_customer_id
+        WHERE c.customer_guid::text = :customer_id
+        ORDER BY r.created_at DESC, r.id DESC
+        """,
+        {"customer_id": customer_id},
+    )
+    return {"customer_id": customer_id, "reports": rows}
 
 
 @router.post("/reports/generate")
@@ -230,11 +335,35 @@ async def generate_report(payload: ReportRequest):
             detail="AI report generation failed; check model connectivity",
         ) from exc
 
+    customer = await fetch_one(
+        "SELECT id FROM public.customer WHERE customer_guid::text = :customer_id",
+        {"customer_id": payload.customer_id},
+    )
+    report = None
+    if customer is not None:
+        report = await fetch_one(
+            """
+            INSERT INTO public.ai_report (
+                report_guid, fk_customer_id, report_text, model, created_at
+            )
+            VALUES (
+                gen_random_uuid(), :customer_id, :report_text, :model, CURRENT_TIMESTAMP
+            )
+            RETURNING id, report_guid::text AS report_id
+            """,
+            {
+                "customer_id": customer["id"],
+                "report_text": content,
+                "model": settings.ai_model_name,
+            },
+        )
+
     return {
         "customer_id": payload.customer_id,
         "report": content,
         "model": settings.ai_model_name,
         "ai_generated": True,
         "source": "computed assessment",
-        "persisted": False,
+        "persisted": report is not None,
+        "report_id": report["report_id"] if report else None,
     }

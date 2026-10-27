@@ -6,7 +6,7 @@ The original application remains the system of record. The extension adds two au
 AML Monitoring, KYC/CDD, Adverse Media, PEP & Sanctions, Network Intelligence, Rule Management, AML Risk Evaluation, Geographic Intelligence, and AI Reports. Read views use existing 404NotFound PostgreSQL tables. The added on-demand evaluator runs 12 deterministic checks and calculates an illustrative score; it reads financial transactions, KYC flags, recorded screening results, country and shared-device links. Optional Gemma report generation is available when configured. The extension does not write the assessment or report back to the database.
 
 ## Source-code reuse
-Relevant AML-KYC-Enterprise-Risk-Upgrade services, tests and documentation are preserved in `integrations/aml_kyc_risk_upgrade_reference/`. They are **reference-only** because their SQLAlchemy data models differ from 404NotFound's SQL schema. The added evaluator uses an explicit adapter for the existing tables rather than replacing the host's customer or risk modules.
+No external reference implementation is bundled in this repository. The earlier AML-KYC-Enterprise-Risk-Upgrade services, tests and documentation were reference-only because their SQLAlchemy data models differed from 404NotFound's SQL schema; they have been removed during cleanup. The added evaluator uses an explicit adapter for the existing tables rather than replacing the host's customer or risk modules. Keycloak is an external prerequisite; no realm export is bundled in this repository.
 
 ## Run locally
 
@@ -20,7 +20,7 @@ merged host pages. API details are in `docs/API_REFERENCE.md`.
 
 Optional ETL: install `data/etl/requirements.txt`, then run the ingestion and
 normalized-load Python scripts in that order. They use the database settings
-from the same root `.env`.
+from the same `backend/.env`.
 
 ## Limitations
 - No live external sanctions/PEP/adverse media connector, identity verification, OCR or Iovation integration is added.

@@ -4,7 +4,7 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
@@ -20,9 +20,10 @@ class Settings(BaseSettings):
     ai_base_url: str = ""
     ai_api_key: str = "local"
     ai_model_name: str = ""
+    dev_auth_bypass: bool = False
 
     model_config = SettingsConfigDict(
-        env_file=PROJECT_ROOT / ".env",
+        env_file=BACKEND_ROOT / ".env",
         case_sensitive=False,
         extra="ignore",
     )

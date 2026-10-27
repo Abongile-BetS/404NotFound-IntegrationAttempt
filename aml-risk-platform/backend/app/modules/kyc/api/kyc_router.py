@@ -25,3 +25,16 @@ async def get_kyc(customer_id: str):
     if record is None:
         raise HTTPException(status_code=404, detail="KYC record not found")
     return record
+
+
+@router.patch("/{customer_id}")
+async def update_kyc(customer_id: str, payload: dict):
+    record = await service.update_customer_kyc(
+        customer_id,
+        identity_status=payload.get("identity_status"),
+        address_status=payload.get("address_status"),
+        verification_result=payload.get("verification_result"),
+    )
+    if record is None:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    return record

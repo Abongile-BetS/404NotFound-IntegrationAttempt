@@ -2,23 +2,33 @@
 .venv/
 venv/
 env/
-
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
 
-# VS Code
-.vscode/
-
-# JetBrains
-.idea/
+# Node / frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
 
 # Environment variables
 .env
+.env.local
+
+# Embedded PostgreSQL data
+.pgdata/
 
 # Test artifacts
 .pytest_cache/
 .coverage
+htmlcov/
+*.log
+
+# Editors
+.vscode/
+.idea/
 
 # OS files
 Thumbs.db

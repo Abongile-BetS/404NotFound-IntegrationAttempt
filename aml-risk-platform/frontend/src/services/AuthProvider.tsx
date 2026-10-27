@@ -41,13 +41,36 @@ function initializeKeycloak() {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-    const [initialized, setInitialized] = useState(false);
-    const [authenticated, setAuthenticated] = useState(false);
-    const [token, setToken] = useState<string>();
-    const [username, setUsername] = useState<string>();
-    const [roles, setRoles] = useState<string[]>([]);
+    const devAuthBypass =
+        import.meta.env.VITE_DEV_AUTH_BYPASS === "true";
+
+    const [initialized, setInitialized] = useState(devAuthBypass);
+    const [authenticated, setAuthenticated] = useState(devAuthBypass);
+    const [token, setToken] = useState<string | undefined>(
+        devAuthBypass ? "dev-token" : undefined,
+    );
+    const [username, setUsername] = useState<string | undefined>(
+        devAuthBypass ? "dev" : undefined,
+    );
+    const [roles, setRoles] = useState<string[]>(
+        devAuthBypass ? ["admin", "analyst", "manager"] : [],
+    );
 
     useEffect(() => {
+        if (devAuthBypass) {
+            return;
+        }
+
+        keycloak.onTokenExpired = () => {
+            keycloak
+                .updateToken(30)
+                .then(() => setToken(keycloak.token))
+                .catch(() => undefined);
+        };
+        keycloak.onAuthRefreshSuccess = () => {
+            setToken(keycloak.token);
+        };
+
         let mounted = true;
 
         initializeKeycloak()
@@ -83,21 +106,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return () => {
             mounted = false;
         };
-    }, []);
+    }, [devAuthBypass]);
 
     async function login() {
+        if (devAuthBypass) {
+            setAuthenticated(true);
+            return;
+        }
         await keycloak.login({
             redirectUri:
                 window.location.origin + "/dashboard",
         });
     }
     async function register() {
+        if (devAuthBypass) {
+            setAuthenticated(true);
+            return;
+        }
         await keycloak.register({
             redirectUri: window.location.origin + "/dashboard",
         });
     }
 
     async function logout() {
+        if (devAuthBypass) {
+            setAuthenticated(false);
+            return;
+        }
         await keycloak.logout({
             redirectUri:
                 window.location.origin + "/login",

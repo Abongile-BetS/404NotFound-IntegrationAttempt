@@ -27,6 +27,17 @@ const ExecutiveDashboard = lazy(
     () => import("./pages/ExecutiveDashboard"),
 );
 
+function NotFoundRedirect() {
+    const { authenticated } = useAuth();
+
+    return (
+        <Navigate
+            to={authenticated ? "/dashboard" : "/login"}
+            replace
+        />
+    );
+}
+
 function RequireAuth() {
     const { initialized, authenticated } = useAuth();
 
@@ -138,7 +149,7 @@ function App() {
                     </Route>
                     <Route
                         path="*"
-                        element={<Navigate to="/login" replace />}
+                        element={<NotFoundRedirect />}
                     />
                 </Routes>
             </Suspense>

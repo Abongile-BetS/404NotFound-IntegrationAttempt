@@ -206,7 +206,8 @@ def evaluate(
         )
     check(
         "AML-NET-001",
-        network_links is not None and network_links >= 2,
+        network_links is not None
+        and network_links >= THRESHOLDS["AML-NET-001"]["min_links"],
         {"linked_customers": network_links},
         network_links is not None,
     )

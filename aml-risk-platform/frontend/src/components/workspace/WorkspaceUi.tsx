@@ -211,8 +211,8 @@ export function Records({
 }: {
     data: WorkspaceResponse;
     rows: WorkspaceRow[];
-    selected: string;
-    onSelect: (id: string) => void;
+    selected?: string;
+    onSelect?: (id: string) => void;
     minWidth?: string;
 }) {
     return (
@@ -249,12 +249,12 @@ export function Records({
                         return (
                             <tr
                                 key={id}
-                                onClick={() => onSelect(id)}
+                                onClick={() => onSelect?.(id)}
                                 tabIndex={0}
                                 onKeyDown={(event) => {
                                     if (event.key === "Enter" || event.key === " ") {
                                         event.preventDefault();
-                                        onSelect(id);
+                                        onSelect?.(id);
                                     }
                                 }}
                                 className={cls(

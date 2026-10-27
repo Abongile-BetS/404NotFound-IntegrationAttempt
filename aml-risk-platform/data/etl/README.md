@@ -233,14 +233,14 @@ The goal is to keep the operational database normalized while providing the ML l
 
 ### Database
 
-The scripts read database settings from the root `.env` file. Create a local
+The scripts read database settings from the `backend/.env` file. Create a local
 PostgreSQL database and deploy the schema as described in
 [`../../docs/LOCAL_SETUP.md`](../../docs/LOCAL_SETUP.md). No separate ETL
 `.env` file is needed.
 
 ### Backend API
 
-The backend and ETL read the root `.env`. Configure `POSTGRES_HOST`,
+The backend and ETL read the `backend/.env`. Configure `POSTGRES_HOST`,
 `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER` and `POSTGRES_PASSWORD` there.
 
 ### Source CSV
